@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="GB2312"?>
+<!-- 
+这是 LordStar 3.0 的自定义扩展命令/函数
+格式：<命令名或函数名>代码内容</命令名或函数名>  
+下列 cmd_example 和 func_example 是两个示例，你可以在游戏里像 LS 的内置命令/函数一样使用它们 
+比如：#cmd_example ab xy 和 %func_example(12,34) 
+要留意的是：
+1. 函数必须将返回值存入 result 这个变量，这样才能得到正确的返回值；
+2. 如果自定义的扩展命令/函数与 LordStar 的内置命令/函数重名，将覆盖 LordStar 的内置命令/函数，
+   你可以用这种方式来重写 LordStar 的内置命令/函数；
+3. 自定义的扩展命令/函数使用的是临时资源包，这意味着在代码中使用的别名、变量等，在代码执行结束
+   后都会被丢弃。如果你需要保存某个变量，应当使用 #var main::varname varvalue 的方式，把值强制
+   写入到主资源包的变量中去；
+4. 不支持延时命令 #wait/#waitfor，如果需要延迟效果，可使用 #alarm ，慎用。
+5. 代码中包含的 > < 等符号容易引起 xml 误认，所以建议在代码头尾加上单引号，整体作为字符串格式。
+-->
+<LordStarExtenstions>
+  <Commands>
+    <cmd_example>
+		'#var a This is an example of;
+		#var b command extenstions;
+		#say %concat(@a," ",@b," with para1(",%1,") para2(",%2,")");
+		#alarm +1 {#say ok %1 %2};'
+    </cmd_example>
+  </Commands>
+
+  <Functions>
+    <func_example>'
+		#var a This is an example of;
+		#var b function extenstions;
+		#var main::varname varvalue;
+		#var result %concat(@a," ",@b," with para1(",%1,") para2(",%2,")")
+    '</func_example>
+  </Functions>
+</LordStarExtenstions>
+
+
