@@ -79,8 +79,12 @@ function DelTimer(Handle: THandle; Name: PChar): Integer;                   stdc
 //
 //   LibVersion     本 Dll 的版本信息
 //   About          显示本 Dll 的有关作者、功能、版本等有关信息
-//   OnSend         当游戏窗口往服务器发送信息时，会自动调用执行该函数（如果有的话）
-//   OnReceive      当游戏窗口收到服务器发来的信息时，会自动调用执行该函数（如果有的话）
+//   OnSend         当游戏连线窗口往服务器发送信息时，会自动调用执行该函数（如果有的话）
+//   OnReceive      当游戏连线窗口收到服务器发来的信息时，会自动调用执行该函数（如果有的话）
+//   OnConnect      当游戏连线窗口成功连接上服务器时，会自动调用执行该函数（如果有的话）
+//   OnDisconnect   当游戏连线窗口与服务器断开连接时，会自动调用执行该函数（如果有的话）
+//   OnNewGame      当新建了一个游戏连线窗口时，会自动调用执行该函数（如果有的话）
+//   OnCloseGame    当关闭了一个游戏连线窗口时，会自动调用执行该函数（如果有的话）
 //
 // 以上各函数的函数名是大小写敏感的，请留意
 //
@@ -128,10 +132,10 @@ begin
 //
 // 作为一个示例，在这里我们调用 LordStar.Dll 提供的接口函数 Say()
   Say(Handle, ClnMsg);
-// 它能够在游戏窗口中显示一段客户端文字，与 LordStar 中的客户端命令 #say 的效果是一样的
-// 这里调用 Say() 的结果，可以往触发本事件的游戏窗口中回显一行同样的文字。
+// 它能够在游戏连线窗口中显示一段客户端文字，与 LordStar 中的客户端命令 #say 的效果是一样的
+// 这里调用 Say() 的结果，可以往触发本事件的游戏连线窗口中回显一行同样的文字。
 //
-// 要注意的一点：调用接口函数 Echo() 可以往游戏窗口添加一段模拟服务器发来的文字，该函数
+// 要注意的一点：调用接口函数 Echo() 可以往游戏连线窗口添加一段模拟服务器发来的文字，该函数
 // 在执行时会触发一次 OnReceive 事件。因此，假如你在这里调用 Echo() 会导致程序陷入死循环
 //
 //
@@ -156,6 +160,67 @@ begin
 //  Buffer_pushString(Handle, 'My New Command');   // 把新指令压入堆栈。如果有多个指令就挨个 push
 //                                                 // 假如不压入新指令，只用 Buffer_Pop() 弹出原指令，就会撤销本次发送指令的操作
 // 如果替换了新指令，别忘了修改 Result 返回值
+  Result:= 0;
+end;
+
+function OnConnect(Handle: THandle; ArgCount: Integer): Integer; export; stdcall;
+var
+  Host, Port: PChar;
+begin
+  Host:= Buffer_toString(Handle, 0);
+  Port:= Buffer_toString(Handle, 1);         
+// Host、Port 是游戏连线窗口成功连接上的服务器地址和端口
+//
+//
+//        在这里做你需要的处理
+//
+//
+// 此函数的返回值无意义
+  Result:= 0;
+end;
+
+function OnDisconnect(Handle: THandle; ArgCount: Integer): Integer; export; stdcall;
+begin                                
+// 此函数没有传入有效参数
+//
+//
+//        在这里做你需要的处理
+//
+//
+// 此函数的返回值无意义
+  Result:= 0;
+end;
+
+function OnNewGame(Handle: THandle; ArgCount: Integer): Integer; export; stdcall;
+var
+  Name, Host, Port: PChar;
+begin
+  Name:= Buffer_toString(Handle, 0);
+  Host:= Buffer_toString(Handle, 1);
+  Port:= Buffer_toString(Handle, 2);     
+// Name 是新建游戏连线窗口的标签名字。Host、Port 是该窗口即将尝试连接的服务器地址和端口
+// 如果新建的窗口是以 #capture 命令建立的纯信息窗口，那么传入的 Host 为空值、Port 为 0
+//
+//
+//        在这里做你需要的处理
+//
+//
+// 此函数的返回值无意义
+  Result:= 0;
+end;
+
+function OnCloseGame(Handle: THandle; ArgCount: Integer): Integer; export; stdcall;
+var
+  Name: PChar;
+begin
+  Name:= Buffer_toString(Handle, 0);   
+// Name 是被关闭的游戏连线窗口的标签名字
+//
+//
+//        在这里做你需要的处理
+//
+//
+// 此函数的返回值无意义
   Result:= 0;
 end;
 
@@ -232,7 +297,7 @@ end;
 // 别忘了把要发布的函数名加到这里
 // 只有发布出去的函数才能被其他程序调用（否则就只能在 Dll 内部使用）
 exports
-  LibName, LibVersion, About, OnSend, OnReceive,
+  LibName, LibVersion, About, OnSend, OnReceive, OnConnect, OnDisconnect, OnNewGame, OnCloseGame,
   add, do_echo, do_newtimer, func1, func2, func3, func4;
 
 begin
