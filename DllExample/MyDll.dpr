@@ -80,7 +80,8 @@ function DelTimer(Handle: THandle; Name: PChar): Integer;                   stdc
 //   LibVersion     本 Dll 的版本信息
 //   About          显示本 Dll 的有关作者、功能、版本等有关信息
 //   OnSend         当游戏连线窗口往服务器发送信息时，会自动调用执行该函数（如果有的话）
-//   OnReceive      当游戏连线窗口收到服务器发来的信息时，会自动调用执行该函数（如果有的话）
+//   OnOrigin       当游戏连线窗口收到服务器发来的原始信息时，会自动调用执行该函数（如果有的话）
+//   OnReceive      当游戏连线窗口对服务器信息进行解析并添加一个新行时，会自动调用执行该函数（如果有的话）
 //   OnConnect      当游戏连线窗口成功连接上服务器时，会自动调用执行该函数（如果有的话）
 //   OnDisconnect   当游戏连线窗口与服务器断开连接时，会自动调用执行该函数（如果有的话）
 //   OnNewGame      当新建了一个游戏连线窗口时，会自动调用执行该函数（如果有的话）
@@ -123,8 +124,8 @@ var
 begin
   RawMsg:= Buffer_toString(Handle, 0);
   ClnMsg:= Buffer_toString(Handle, 1);
-// RawMsg 是服务器发来的原始信息（包含各种控制码、颜色码等）
-// ClnMsg 是 RawMsg 经过解读之后的纯文字信息，也就是最终在屏幕上所能看到的显示文字
+// RawMsg 是包含各种控制码、颜色码的信息
+// ClnMsg 是 RawMsg 经过解读消除控制码之后的纯文字信息，也就是最终在屏幕上所能看到的显示文字
 //
 //
 //        在这里做你需要的处理
@@ -139,6 +140,36 @@ begin
 // 在执行时会触发一次 OnReceive 事件。因此，假如你在这里调用 Echo() 会导致程序陷入死循环
 //
 //
+// 如果有返回数据，除了用 Buffer_pushString() 压入堆栈之外，别忘了修改 Result 返回值
+  Result:= 0;
+end;
+
+function OnOrigin(Handle: THandle; ArgCount: Integer): Integer; export; stdcall;
+var
+  OrginMsg: PChar;
+begin
+  OrginMsg:= Buffer_toString(Handle, 0);
+// OrginMsg 是服务器发来的原始信息（包含各类控制码、颜色码等）
+//
+//  OnOrigin 与 OnReceive 都是在接收服务器信息时自动调用，但前后顺序不一样
+// 当接收到服务器发来的信息时，整个过程是这样的：
+//
+//   （1）从 Socket 中读出原始信息   ->   调用 OnOrigin，原始信息保存在 OrginMsg
+//
+//   （2）对原始信息进行初步解析，拆解为一个一个的文字行
+//   （3）添加一个行，对行信息进行第二次解析，消除控制码，生成纯文字信息
+//                                   ->   调用 OnReceive，这行文字的原始信息保存在 RawMsg
+//                                                        纯文字信息保存在 ClnMsg
+//
+//
+//        在这里做你需要的处理
+//
+//
+// 可以通过修改此函数返回值的方式，使 LordStar 丢弃该信息
+//  Buffer_Pop(Handle);    // 弹出堆栈中原本要发送的指令，准备压入替换指令。
+//  Buffer_pushString(Handle, PChar('drop'));   // 把新指令压入堆栈
+//                                              // 返回一个字符串 drop 可以使 LordStar 丢弃该信息
+// 假如信息被丢弃，后续的 OnReceive 就不会再被调用了，LordStar 会装作从来没接收过这段信息……
 // 如果有返回数据，除了用 Buffer_pushString() 压入堆栈之外，别忘了修改 Result 返回值
   Result:= 0;
 end;
@@ -297,7 +328,8 @@ end;
 // 别忘了把要发布的函数名加到这里
 // 只有发布出去的函数才能被其他程序调用（否则就只能在 Dll 内部使用）
 exports
-  LibName, LibVersion, About, OnSend, OnReceive, OnConnect, OnDisconnect, OnNewGame, OnCloseGame,
+  LibName, LibVersion, About, OnSend, OnOrigin, OnReceive,
+  OnConnect, OnDisconnect, OnNewGame, OnCloseGame, 
   add, do_echo, do_newtimer, func1, func2, func3, func4;
 
 begin
