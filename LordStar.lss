@@ -1,0 +1,5 @@
+//以下指令可用于在启动 LordStar 时自动开启两个游戏连接
+//#newgame 148.70.239.12 5555 dmmb2.lsu;
+//#label 侠客英雄传 1;
+//#newgame www.fengyunmud.top 6000 test.lsu;
+//#label 风云2018 2;
